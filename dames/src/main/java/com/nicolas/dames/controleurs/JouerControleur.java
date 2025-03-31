@@ -3,14 +3,9 @@ package com.nicolas.dames.controleurs;
 import com.nicolas.dames.MainApplication;
 import com.nicolas.dames.logique.GestionJeu;
 import com.nicolas.dames.logique.Jeu;
-import javafx.application.Platform;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -18,7 +13,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
-
+import javafx.scene.paint.Color;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +34,7 @@ public class JouerControleur {
     private List<ImageView> blancImageViews = new ArrayList<>();
 
     /*CheckBox afficher*/
-    public CheckBox checkBoxNoir;
-    public CheckBox checkBoxBlanc;
+    public CheckBox checkBoxPions;
 
     int pionsNoirCapture = 0;
     int pionsBlancCapture = 0;
@@ -114,9 +108,19 @@ public class JouerControleur {
     }
 
 
+
     public boolean finirPartie() {
         if (gestionJeu.nouveauJeu.estFinDePartie()) {
-            gagnantTexte.setText("Gagnant: " + gestionJeu.nouveauJeu.getGagnant());
+            String gagnant = gestionJeu.nouveauJeu.getGagnant();
+            gagnantTexte.setText("Gagnant: " + gagnant);
+
+            // Change text color based on the winner
+            if (gagnant.equals("noirs")) {
+                gagnantTexte.setTextFill(Color.BLACK); // Black color for "noirs"
+            } else {
+                gagnantTexte.setTextFill(Color.WHITE); // White color for other winners
+            }
+
             return true;
         }
         gagnantTexte.setText("");
@@ -203,11 +207,10 @@ public class JouerControleur {
     }
 
     public void afficherCaptureNoir() {
-        if (checkBoxNoir.isSelected()) {
+        if (checkBoxPions.isSelected()) {
             captureEnnemiVBox.setVisible(true);
             // Add all the ImageViews to the VBox
             captureEnnemiVBox.getChildren().clear(); // Clear any existing images first
-            captureEnnemiVBox.getChildren().add(checkBoxNoir); // Re-add the checkbox if it's visible
 
             for (ImageView imageView : noirImageViews) {
                 captureEnnemiVBox.getChildren().add(imageView); // Add the new image views
@@ -215,16 +218,20 @@ public class JouerControleur {
         } else {
             // Remove all ImageViews from the VBox, but keep the checkbox
             captureEnnemiVBox.getChildren().clear();
-            captureEnnemiVBox.getChildren().add(checkBoxNoir); // Keep the checkbox
         }
     }
 
+    public void afficherCaptures()
+    {
+        afficherCaptureBlanc();
+        afficherCaptureNoir();
+    }
+
     public void afficherCaptureBlanc() {
-        if (checkBoxBlanc.isSelected()) {
+        if (checkBoxPions.isSelected()) {
             captureJoueurVBox.setVisible(true);
             // Add all the ImageViews to the VBox
             captureJoueurVBox.getChildren().clear(); // Clear any existing images first
-            captureJoueurVBox.getChildren().add(checkBoxBlanc); // Re-add the checkbox if it's visible
 
             for (ImageView imageView : blancImageViews) {
                 captureJoueurVBox.getChildren().add(imageView); // Add the new image views
@@ -232,7 +239,6 @@ public class JouerControleur {
         } else {
             // Remove all ImageViews from the VBox, but keep the checkbox
             captureJoueurVBox.getChildren().clear();
-            captureJoueurVBox.getChildren().add(checkBoxBlanc); // Keep the checkbox
         }
     }
 

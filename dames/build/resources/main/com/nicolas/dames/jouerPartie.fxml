@@ -275,23 +275,12 @@
       </GridPane>
    </center>
    <right>
-      <VBox fx:id="captureJoueurVBox" prefHeight="412.0" prefWidth="109.0" BorderPane.alignment="CENTER">
-         <children>
-            <CheckBox fx:id="checkBoxBlanc" mnemonicParsing="false" onAction="#afficherCaptureBlanc" text="Pions &#10;joueur &#10;capturés">
-               <VBox.margin>
-                  <Insets right="5.0" />
-               </VBox.margin>
-            </CheckBox>
-         </children></VBox>
+      <VBox fx:id="captureJoueurVBox" prefHeight="412.0" prefWidth="109.0" BorderPane.alignment="CENTER" />
    </right>
    <left>
-      <VBox fx:id="captureEnnemiVBox" prefHeight="512.0" prefWidth="98.0" BorderPane.alignment="CENTER">
+      <VBox fx:id="captureEnnemiVBox" prefHeight="512.0" prefWidth="94.0" BorderPane.alignment="CENTER">
          <children>
-            <CheckBox fx:id="checkBoxNoir" mnemonicParsing="false" onAction="#afficherCaptureNoir" text="Pions &#10;ennemis &#10;capturés">
-               <VBox.margin>
-                  <Insets left="5.0" />
-               </VBox.margin>
-            </CheckBox>
+            <Label text="Pions noirs &#10;capturés" />
          </children></VBox>
    </left>
    <top>
@@ -318,6 +307,14 @@
          </children></HBox>
    </top>
    <bottom>
-      <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER" />
+      <HBox prefHeight="100.0" prefWidth="200.0" BorderPane.alignment="CENTER">
+         <children>
+            <VBox prefHeight="100.0" prefWidth="989.0" />
+            <VBox prefHeight="100.0" prefWidth="211.0">
+               <children>
+                  <CheckBox fx:id="checkBoxPions" mnemonicParsing="false" onAction="#afficherCaptures" text="Cacher&#10;les pions" textFill="WHITE" />
+               </children>
+            </VBox>
+         </children></HBox>
    </bottom>
 </BorderPane>
