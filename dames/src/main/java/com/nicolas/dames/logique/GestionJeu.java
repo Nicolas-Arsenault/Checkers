@@ -30,6 +30,13 @@ public class GestionJeu {
         System.out.println("Starting AI turn");
         boolean tourTermine = nouveauJeu.tourDeLEnemi();
         if (tourTermine) {
+
+            if(nouveauJeu.aucunMouvementPossible(false))
+            {
+                nouveauJeu.finPartie = true;
+                nouveauJeu.estFinDePartie();
+            }
+            
             System.out.println("AI turn completed");
             nouveauJeu.changerTour();
         }
