@@ -278,6 +278,11 @@ public class Jeu {
             return false;
         }
 
+        if(Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2)
+        {
+            return false;
+        }
+
         // Vérifier si on essaie de reculer dépendamment du pion.
         Pion pionActuel = positionPions.get(coordActuelle);
         boolean estEnnemi = pionActuel.estEnnemi; // True si c'est un pion ennemi, false sinon.
