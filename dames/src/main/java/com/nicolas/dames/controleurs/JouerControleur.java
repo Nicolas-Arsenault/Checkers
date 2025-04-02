@@ -3,7 +3,6 @@ package com.nicolas.dames.controleurs;
 import com.nicolas.dames.MainApplication;
 import com.nicolas.dames.logique.GestionJeu;
 import com.nicolas.dames.logique.Jeu;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -18,121 +17,159 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * @classe JeuControleur.
+ * @visibilite publique (public).
+ * @description Fait le lien entre le visuel du jeu et la logique du jeu.
+ */
 public class JouerControleur {
 
-    public static String gagnant;
     @FXML
     public Label gagnantTexte = null;
-    public GridPane grille;
+    public GridPane grille; //Damier
+
+    /*Conteneneur de la grille etc...*/
     public BorderPane jouerBorderPane;
 
-    /*Captures*/
+    /*Conteneurs des pions capturés*/
     public VBox captureEnnemiVBox;
     public VBox captureJoueurVBox;
 
+    //Liste des pions mangés
     private List<ImageView> noirImageViews = new ArrayList<>();
     private List<ImageView> blancImageViews = new ArrayList<>();
 
-    /*CheckBox afficher*/
+    //CheckBox pour afficher les pions mangés
     public CheckBox checkBoxPions;
 
+    //Comtpe des pions mangés
     int pionsNoirCapture = 0;
     int pionsBlancCapture = 0;
 
+    //Coordonnées de sélection avec MouseClick
     int coordXAvant;
     int coordYAvant;
+
+    //Savoir si un pion est déjà sélectionné ou non
     public static boolean estSelectionnee = false;
+
+    //Création du jeu
     public GestionJeu gestionJeu = new GestionJeu();
 
+    /**
+     * @methode initialize.
+     * @visibilite publique (public).
+     * @description Méthode pour initialiser le jeu et un "mouse listener" pour savoir la case cliquée.
+     */
     public void initialize() {
 
+        //Commencer le jeu
         gestionJeu.commencerJeu(grille);
+
+        //Reinitialiser le jeu "clean up"
         reinitJeu();
         gestionJeu.nouveauJeu.updateAllImages();
-        gestionJeu.nouveauJeu.setController(this);
+        gestionJeu.nouveauJeu.setController(this); //Donner une référence de l'instance de ce controlleur au jeu.
 
-        grille.addEventHandler(MouseEvent.MOUSE_CLICKED, new EventHandler<MouseEvent>() {
-            @Override
-            public void handle(MouseEvent mouseEvent) {
+        /*Ajouter le "mouse listenener"*/
+        grille.addEventHandler(MouseEvent.MOUSE_CLICKED, mouseEvent -> {
 
-                Node clickedNode = mouseEvent.getPickResult().getIntersectedNode();
-                Integer colindex = GridPane.getColumnIndex(clickedNode);
-                Integer rowIndex = GridPane.getRowIndex(clickedNode);
+            /*Extraire l'indice Ligne et l'indice colonne qu'on vient de cliquer dessus*/
+            Node nodeCliquee = mouseEvent.getPickResult().getIntersectedNode();
+            Integer colindex = GridPane.getColumnIndex(nodeCliquee);
+            Integer ligneIndex = GridPane.getRowIndex(nodeCliquee);
 
-                if(gestionJeu.nouveauJeu.extractionPion(Jeu.extraireCoordDeXY(rowIndex,colindex),false) != null
-                    && !estSelectionnee && gestionJeu.nouveauJeu.tourJoueur && !gestionJeu.nouveauJeu.finPartie)
+            //Si on a cliqué sur une case contenant notre pion, enregistrer son index et effectuer la sélection*/
+            if(gestionJeu.nouveauJeu.extractionPion(Jeu.extraireCoordDeXY(ligneIndex,colindex),false) != null
+                && !estSelectionnee && gestionJeu.nouveauJeu.tourJoueur && !gestionJeu.nouveauJeu.finPartie)
+            {
+                gestionJeu.nouveauJeu.effectuerSelection(ligneIndex,colindex); //Effectuer la sélection du pion cliqué
+                estSelectionnee = true; //Indiquer qu'il est sélectionné
+
+                //Enregistrer les coordonnées sélectionnées
+                coordXAvant = ligneIndex;
+                coordYAvant = colindex;
+
+                //Vérifier si la partie est finie
+                finirPartie();
+            }
+            else if(estSelectionnee && gestionJeu.nouveauJeu.tourJoueur && !gestionJeu.nouveauJeu.finPartie)
+            {
+                //Si le pion est selectionnée et la personne veut faire un déplacement valide, effectuer ce déplacement
+                if(gestionJeu.nouveauJeu.estDeplacementValide((Jeu.extraireCoordDeXY(coordXAvant,coordYAvant)),
+                    Jeu.extraireCoordDeXY(ligneIndex,colindex)))
                 {
-                    gestionJeu.nouveauJeu.effectuerSelection(rowIndex,colindex);
-                    estSelectionnee = true;
+                    //Mettre à jour la position du pion déplacé.
+                    gestionJeu.nouveauJeu.mettreAJourPositionPions(
+                            Jeu.extraireCoordDeXY(coordXAvant,coordYAvant),
+                            Jeu.extraireCoordDeXY(ligneIndex,colindex),
+                            gestionJeu.nouveauJeu.extractionPion(Jeu.extraireCoordDeXY(coordXAvant,coordYAvant),false)
+                    );
 
-                    coordXAvant = rowIndex;
-                    coordYAvant = colindex;
+                    estSelectionnee = false; //Le pion n'est plus sélectionné
+
+                    //Finir le tour et canceller la sélection
+                    gestionJeu.finDeTourJoueur();
+                    gestionJeu.nouveauJeu.cancellerSelection(coordXAvant,coordYAvant);
+
+                    //Mettre à jour les images déplacées
+                    gestionJeu.nouveauJeu.updateAllImages();
+
+                    //Vérifier si la partie est finie
                     finirPartie();
                 }
-                else if(estSelectionnee && gestionJeu.nouveauJeu.tourJoueur && !gestionJeu.nouveauJeu.finPartie)
+                else if(gestionJeu.nouveauJeu.tourJoueur) //Si le joueur clique n'importe où, canceller sa sélection
                 {
-                    //si le pion est selectionnée et la personne veut faire un déplacement valide, effectuer ce déplacement
-                    if(gestionJeu.nouveauJeu.estDeplacementValide((Jeu.extraireCoordDeXY(coordXAvant,coordYAvant)),
-                        Jeu.extraireCoordDeXY(rowIndex,colindex)))
-                    {
-                        System.out.println("coord actu: " + Jeu.extraireCoordDeXY(coordXAvant,coordYAvant) + "coord deplace" + Jeu.extraireCoordDeXY(rowIndex,colindex));
-
-                        gestionJeu.nouveauJeu.mettreAJourPositionPions(
-                                Jeu.extraireCoordDeXY(coordXAvant,coordYAvant),
-                                Jeu.extraireCoordDeXY(rowIndex,colindex),
-                                gestionJeu.nouveauJeu.extractionPion(Jeu.extraireCoordDeXY(coordXAvant,coordYAvant),false)
-                        );
-                        estSelectionnee = false;
-
-                        gestionJeu.finDeTourJoueur();
-                        gestionJeu.nouveauJeu.cancellerSelection(coordXAvant,coordYAvant);
-
-                        gestionJeu.nouveauJeu.updateAllImages();
-                        finirPartie();
-                    }
-                    else if(gestionJeu.nouveauJeu.tourJoueur)
-                    {
-                        estSelectionnee = false;
-                        gestionJeu.nouveauJeu.cancellerSelection(coordXAvant,coordYAvant);
-                        finirPartie();
-                    }
-                    else
-                    {
-                        finirPartie();
-                    }
+                    estSelectionnee = false;
+                    gestionJeu.nouveauJeu.cancellerSelection(coordXAvant,coordYAvant);
+                    finirPartie();
                 }
-
-                System.out.println("Col : " + colindex + " Row : " + rowIndex);
+                else
+                {
+                    finirPartie();
+                }
             }
         });
     }
 
 
+    /**
+     * @methode finirPartie.
+     * @visibilite privée (private).
+     * @description Méthode pour vérifier si la partie est finie et afficher le gagnant(e) en conséquence
+     */
+    private void finirPartie() {
 
-    public boolean finirPartie() {
-        if (gestionJeu.nouveauJeu.estFinDePartie()) {
-            String gagnant = gestionJeu.nouveauJeu.getGagnant();
-            gagnantTexte.setText("Gagnant: " + gagnant);
+        if (gestionJeu.nouveauJeu.estFinDePartie())
+        {
+            String gagnant = gestionJeu.nouveauJeu.getGagnant(); //Savoir qui a gagné.
 
-            // Change text color based on the winner
+            gagnantTexte.setText("Gagnant: " + gagnant); //Mettre à jour le texte du gagnant de la pratie.
+
+            // Changer la couleur du texte en fonction du gagnant.
             if (gagnant.equals("noirs")) {
-                gagnantTexte.setTextFill(Color.BLACK); // Black color for "noirs"
+                gagnantTexte.setTextFill(Color.BLACK);
             } else {
-                gagnantTexte.setTextFill(Color.WHITE); // White color for other winners
+                gagnantTexte.setTextFill(Color.WHITE);
             }
-
-            return true;
+            return;
         }
+        //Réinitialiser le texte.
         gagnantTexte.setText("");
-        return false;
     }
 
-
+    /**
+     * @methode recommencerPartie.
+     * @visibilite publique (public).
+     * @description Méthode vérifie si le bouton "recommencer la partie" a été cliqué et confirmé
+     */
     public void recommencerPartie() throws IOException {
         if(MenuControleur.montrerConfirmationFenetre("recommencer la partie."))
         {
+            //Si confirmé, reéinitialiser le jeu".
             reinitJeu();
 
+            //Écraser le fxml déjà chargé. (N'utilise pas plus de ressources).
             FXMLLoader loader = new FXMLLoader(MainApplication.class.getResource("jouerPartie.fxml"));
             Pane pane = loader.load();
             BorderPane mainBorderPane = accederMenuBorderPane();
@@ -140,26 +177,43 @@ public class JouerControleur {
         }
     }
 
+    /**
+     * @methode reinitJeu.
+     * @visibilite privée (private).
+     * @description Méthode pour initialiser les pions sur le plateau.
+     */
     private void reinitJeu() {
         gestionJeu.nouveauJeu.reinitialiserJeu();
         gagnantTexte.setText("");
         gestionJeu.nouveauJeu.dessinerJeu();
     }
 
+    /**
+     * @methode initialisationJeu.
+     * @visibilite privée (private).
+     * @return Le BorderPane de la scène principale "menu".
+     * @description Méthode pour accéder au BorderPane du menu principal.
+     */
     private BorderPane accederMenuBorderPane()
     {
-        Node node = jouerBorderPane;
+        Node node = jouerBorderPane; //Référence au BorderPane du jeu
+
+        //Get parent jusqu'à ce qu'on soit à la racine
         while (node.getParent() != null){
             node = node.getParent();
         }
+        //Extraire la racine et retourner ce BorderPane
         Node parentNode = node;
         return (BorderPane) parentNode;
-
-
     }
 
+    /**
+     * @methode incrementerCaptureNoir.
+     * @visibilite publique (public).
+     * @description Incrémente et ajoute à la liste d'image les pions noirs capturés
+     */
     public void incrementerCaptureNoir(boolean estDame) {
-        // Create the image view for a black piece
+        // Créer l'image en fonction de si c'est une dame ou non.
         Image image;
         if(estDame)
         {
@@ -170,20 +224,26 @@ public class JouerControleur {
             image = new Image(Jeu.class.getResourceAsStream("/images/noir-normal.png"));
         }
 
+        //Créer la View
         ImageView imageView = new ImageView(image);
         imageView.setFitHeight(35);
         imageView.setFitWidth(35);
         imageView.setTranslateY(10);
 
-        pionsNoirCapture++; // Increment the count
-        noirImageViews.add(imageView); // Add the new image view to the list
+        pionsNoirCapture++; // Incrémenter le compte
+        noirImageViews.add(imageView); // Ajouter l'image dans la liste
 
-        // Immediately update the VBox to reflect the new image
+        // Mettre à jour l'affichage des pions capturés
         afficherCaptureNoir();
     }
 
+    /**
+     * @methode incrementerCaptureBlanc.
+     * @visibilite publique (public).
+     * @description Incrémente et ajoute à la liste d'image les pions blancs capturés
+     */
     public void incrementerCaptureBlanc(boolean estDame) {
-        // Create the image view for a white piece
+        // Créer l'image en fonction de si c'est une dame ou non.
         Image image;
 
         if(estDame)
@@ -195,58 +255,89 @@ public class JouerControleur {
             image = new Image(Jeu.class.getResourceAsStream("/images/blanc-normal.png"));
         }
 
+        //Créer la View
         ImageView imageView = new ImageView(image);
         imageView.setFitHeight(35);
         imageView.setFitWidth(35);
         imageView.setTranslateY(10);
-        pionsBlancCapture++; // Increment the count
-        blancImageViews.add(imageView); // Add the new image view to the list
+        pionsBlancCapture++; // Incrémenter le compte
+        blancImageViews.add(imageView); // Ajouter l'image à la liste
 
-        // Immediately update the VBox to reflect the new image
+        // Mettre à jour l'affichage
         afficherCaptureBlanc();
     }
 
-    public void afficherCaptureNoir() {
+    /**
+     * @methode afficherCaptureNoir.
+     * @visibilite privée (private).
+     * @description Méthode pour afficher la capture de pions noirs.
+     */
+    private void afficherCaptureNoir() {
+
+        //Vérifie si la case "Cacher les pions" est coché
         if (checkBoxPions.isSelected()) {
             captureEnnemiVBox.setVisible(true);
-            // Add all the ImageViews to the VBox
-            captureEnnemiVBox.getChildren().clear(); // Clear any existing images first
 
+            captureEnnemiVBox.getChildren().clear(); // Effacer toutes les images de la Vbox
+
+            //ajouter toutes les images dans la VBox
             for (ImageView imageView : noirImageViews) {
-                captureEnnemiVBox.getChildren().add(imageView); // Add the new image views
+                captureEnnemiVBox.getChildren().add(imageView);
             }
         } else {
-            // Remove all ImageViews from the VBox, but keep the checkbox
+            // Si la case n'est pas cochée, effacer toutes les images.
             captureEnnemiVBox.getChildren().clear();
         }
     }
 
+    /**
+     * @methode afficherCaptures.
+     * @visibilite publique (public).
+     * @description Méthode appelée lors d'un "MouseClick" sur la case "Cacher les pions" pour afficher tous les pions capturés.
+     */
     public void afficherCaptures()
     {
         afficherCaptureBlanc();
         afficherCaptureNoir();
     }
 
-    public void afficherCaptureBlanc() {
+    /**
+     * @methode afficherCaptureBlanc.
+     * @visibilite privée (private).
+     * @description Méthode pour afficher la capture de pions blancs.
+     */
+    private void afficherCaptureBlanc() {
+
+        //Vérifie si la case "Cacher les pions" est coché
         if (checkBoxPions.isSelected()) {
             captureJoueurVBox.setVisible(true);
-            // Add all the ImageViews to the VBox
-            captureJoueurVBox.getChildren().clear(); // Clear any existing images first
 
+            captureJoueurVBox.getChildren().clear(); // Effacer toutes les images de la Vbox
+
+            //ajouter toutes les images dans la VBox
             for (ImageView imageView : blancImageViews) {
-                captureJoueurVBox.getChildren().add(imageView); // Add the new image views
+                captureJoueurVBox.getChildren().add(imageView);
             }
         } else {
-            // Remove all ImageViews from the VBox, but keep the checkbox
+            // Si la case n'est pas cochée, effacer toutes les images.
             captureJoueurVBox.getChildren().clear();
         }
     }
 
+    /**
+     * @methode quitterPartie.
+     * @visibilite publique (public).
+     * @description Méthode pour retourner au menu et réinitialiser le jeu.
+     */
     public void quitterPartie() throws IOException {
+
+        //Si l'utilisateur clique "Quitter la partie" et confirme.
         if(MenuControleur.montrerConfirmationFenetre("quitter la partie."))
         {
+            //Réintialiser le jeu
             reinitJeu();
 
+            //Changer de scène.
             FXMLLoader loader = new FXMLLoader(MainApplication.class.getResource("accueil.fxml"));
             Pane pane = loader.load();
             BorderPane mainBorderPane = accederMenuBorderPane();

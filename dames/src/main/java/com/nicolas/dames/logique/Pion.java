@@ -4,7 +4,6 @@ package com.nicolas.dames.logique;
  * @classe Pion.
  * @visibilite défaut (default).
  * @description Représente un pion dans le jeu de dame.
- *
  */
 public class Pion
 {

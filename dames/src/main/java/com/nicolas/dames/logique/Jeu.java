@@ -8,7 +8,6 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.image.ImageView;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * @classe Jeu.
@@ -18,19 +17,23 @@ import java.util.stream.Collectors;
 
 public class Jeu {
 
-    // Constantes pour les couleurs dans la console
+    //Référence au controleur de la partie
+    private JouerControleur controller;
+    //Référence au damier
     private static GridPane damier;
     /** Map pour stocker la position des pions. */
     private static final Map<String, Pion> positionPions = new HashMap<>();
     /** true = tour du joueur, false = tour de l'ennemi. */
     public boolean tourJoueur = true;
+    //Variables pour gérer la fin de partie
     public boolean finPartie = false;
     public String gagnant = "";
 
     /**
      * @constructeur Jeu.
      * @visibilite publique (public).
-     * @description Constructeur pour initialiser le jeu.
+     * @param damierRef Référence au damier du jeu.
+     * @description Constructeur pour initialiser le jeu et avoir une référence au damier.
      */
     public Jeu(GridPane damierRef)
     {
@@ -92,48 +95,53 @@ public class Jeu {
      */
     public static String extraireCoordDeXY(int x, int y)
     {
-        //coord ok
-        return String.valueOf((char) (y + '@')) + (x); //y + ASCII de A = lettre du plateau (colonne). X + ASCII de 1 = Chiffre du plateau (ligne).
-
+        return String.valueOf((char) (y + '@')) + (x); //y + ASCII de @ = lettre du plateau (colonne). X = Chiffre du plateau (ligne).
     }
 
+    /**
+     * @methode updateAllImages.
+     * @visibilite publique (public).
+     * @description Méthode pour metter à jour toutes les images sur le plateau, selon la position des pions.
+     */
+
     public void updateAllImages() {
-        // Step 1: Delete all existing images
+
+        // Supprimer toutes les images
         damier.getChildren().removeIf(node -> node instanceof ImageView);
 
-        // Step 2: Redraw all images based on current game state
+        // Redessiner touets les image selon leur position
         for (int i = 1; i < 9; i++) {
             for (int j = 1; j < 9; j++) {
                 String coord = extraireCoordDeXY(i, j);
                 Pion pion = positionPions.get(coord);
-                boolean isBlackSquare = (i + j) % 2 == 1;
+                boolean estCarreVert = (i + j) % 2 == 1;
 
-                // Only draw on black squares and when there's a pawn
-                if (pion != null && isBlackSquare) {
-                    String imagePath = "";
+                //Dessiner juste sur les carrés verts
+                if (pion != null && estCarreVert) {
+                    String imageSource;
 
                     if (pion.estDame) {
-                        imagePath = pion.estEnnemi ? "/images/noir-dame.png" : "/images/blanc-dame.png";
+                        imageSource = pion.estEnnemi ? "/images/noir-dame.png" : "/images/blanc-dame.png";
                     } else {
-                        imagePath = pion.estEnnemi ? "/images/noir-normal.png" : "/images/blanc-normal.png";
+                        imageSource = pion.estEnnemi ? "/images/noir-normal.png" : "/images/blanc-normal.png";
                     }
 
-                    // Create and configure the new image
-                    Image image = new Image(Jeu.class.getResourceAsStream(imagePath));
+                    // Créer l'image View
+                    Image image = new Image(Objects.requireNonNull(Jeu.class.getResourceAsStream(imageSource)));
                     ImageView imageView = new ImageView(image);
                     imageView.setFitWidth(35);
                     imageView.setFitHeight(35);
                     imageView.setPreserveRatio(true);
 
-                    // Position the image in the grid
+                    //Positionner l'image
                     GridPane.setRowIndex(imageView, i);
                     GridPane.setColumnIndex(imageView, j);
 
-                    // Add slight translation if needed
+                    // Ajouter une translation
                     imageView.setTranslateX(10);
                     imageView.setTranslateY(0);
 
-                    // Add to grid
+                    // Ajouter au damier
                     damier.getChildren().add(imageView);
                 }
             }
@@ -143,7 +151,7 @@ public class Jeu {
     /**
      * @methode dessinerJeu.
      * @visibilite publique (public).
-     * @description  Méthiode pour dessiner le plateau de jeu.
+     * @description  Méthode pour dessiner le plateau de jeu.
      */
 
     public void dessinerJeu()
@@ -156,37 +164,35 @@ public class Jeu {
                 Pion pion = positionPions.get(coord);
 
                 String imagePath = "";
-                boolean isBlackSquare = (i + j) % 2 == 1;
+                boolean estCarreVert = (i + j) % 2 == 1;
 
 
 
-                if (pion != null && isBlackSquare) {  // If there's a pawn and it's a black square
+                if (pion != null && estCarreVert) {  // S'il y a un pion et que c'est un carrée vert
                     if (pion.estDame) {
-                        imagePath = pion.estEnnemi ? "/images/noir-dame.png" : "/images/blanc-dame.png"; // Black or white queen
+                        imagePath = pion.estEnnemi ? "/images/noir-dame.png" : "/images/blanc-dame.png"; // Dame noire ou blanche
                     } else {
-                        imagePath = pion.estEnnemi ? "/images/noir-normal.png" : "/images/blanc-normal.png"; // Black or white pawn
+                        imagePath = pion.estEnnemi ? "/images/noir-normal.png" : "/images/blanc-normal.png"; // Pion noir ou blanc
                     }
                 }
 
-// Add the image to the grid
-                Image image = new Image(Jeu.class.getResourceAsStream(imagePath));
+                //Créer la Vue de l'image
+                Image image = new Image(Objects.requireNonNull(Jeu.class.getResourceAsStream(imagePath)));
                 ImageView imageView = new ImageView(image);
-                imageView.setFitWidth(35);  // Adjust this size as necessary
+                imageView.setFitWidth(35);
                 imageView.setFitHeight(35);
                 imageView.setPreserveRatio(true);
 
-// Set correct positioning
+                //Positionner la vue
                 GridPane.setRowIndex(imageView, i);
                 GridPane.setColumnIndex(imageView, j);
 
-// Add ImageView to GridPane
+                //Ajouter l'image au damier
                 damier.getChildren().add(imageView);
 
-// Optional: To ensure it's correctly clickable, no need to use TranslateX/TranslateY unless needed
+                //Ajouter une translation à la vue
                 imageView.setTranslateX(10);
                 imageView.setTranslateY(0);
-
-
             }
         }
     }
@@ -278,6 +284,7 @@ public class Jeu {
             return false;
         }
 
+        //Vérifier si le déplacement est trop grand
         if(Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2)
         {
             return false;
@@ -318,12 +325,9 @@ public class Jeu {
             Pion pionIntermediaire = positionPions.get(coordIntermediaire);
 
             // Vérifier si la case intermédiaire contient un pion ennemi.
-            if (pionIntermediaire == null || pionIntermediaire.estEnnemi == pionActuel.estEnnemi) {
-                return false; // La case intermédiaire ne contient pas un pion ennemi.
-            }
+            return pionIntermediaire != null && pionIntermediaire.estEnnemi != pionActuel.estEnnemi; // La case intermédiaire ne contient pas un pion ennemi.
 
             // La prise est valide.
-            return true;
         }
 
         // Si le déplacement est d'une case, vérifier qu'il n'y a pas de pion à la destination.
@@ -331,7 +335,6 @@ public class Jeu {
     }
 
     /**
-     *
      * @methode verifPromotionDame.
      * @visibilite privée (private).
      * @description Méthode pour vérifier si un pion doit être promu en dame.
@@ -339,7 +342,6 @@ public class Jeu {
      */
     private void verifPromotionDame(String coordonnee)
     {
-        System.out.println(coordonnee);
         Pion tempoPion = positionPions.get(coordonnee); //Extraire le pion à la coordonnée spécifiée.
         
         if(tempoPion.estEnnemi && extraireValeurX(coordonnee) == 8) //Si c'est un ennemi et qu'il se trouve à l'autre bout du plateau, faire la promotion.
@@ -351,8 +353,16 @@ public class Jeu {
         }
     }
 
+    /**
+     * @methode deplacerImageView.
+     * @visibilite privée (private).
+     * @description Méthode pour déplacer les Vues d'images.
+     * @param imageView Référence à la vue de l'image à déplacer
+     * @param destinationY Coordonnée en Y du déplacement de l'image
+     * @param destinationX  Coordonnée en X du déplacement de l'image
+     */
 
-    public void deplacerImageView(ImageView imageView,int xActuel, int yActuel, int destinationX, int destinationY) {
+    private void deplacerImageView(ImageView imageView, int destinationX, int destinationY) {
         // Vérification si l'ImageView existe toujours dans le GridPane
         if (imageView != null) {
 
@@ -360,13 +370,15 @@ public class Jeu {
             GridPane.setColumnIndex(imageView, destinationY);
 
             JouerControleur.estSelectionnee = false;
-            System.out.println("Déplacement effectué à la position (" + destinationX + ", " + destinationY + ")" + " à partir de " + xActuel + " " + yActuel);
-        } else {
-            System.out.println("L'ImageView est null, impossible de déplacer.");
         }
     }
-    private JouerControleur controller;
 
+
+    /**
+     * @methode setController.
+     * @visibilite publique (public)
+     * @description Méthode pour avoir une référence au controleur du jeu
+     */
     public void setController(JouerControleur controller) {
         this.controller = controller;
     }
@@ -408,26 +420,14 @@ public class Jeu {
 
                     if(positionPions.get(coordIntermediaire).estEnnemi)
                     {
-                        if(positionPions.get(coordIntermediaire).estDame)
-                        {
-                            controller.incrementerCaptureNoir(true);
-                        }
-                        else
-                        {
-                            controller.incrementerCaptureNoir(false);
-                        }
+                        //Incrémenter la capture du pion mangé
+                        controller.incrementerCaptureNoir(positionPions.get(coordIntermediaire).estDame); //Incrémenter la capture du pion mangé
 
                     }
                     else
                     {
-                        if(positionPions.get(coordIntermediaire).estDame)
-                        {
-                            controller.incrementerCaptureBlanc(true);
-                        }
-                        else
-                        {
-                            controller.incrementerCaptureBlanc(false);
-                        }
+                        //Incrémenter la capture du pion mangé
+                        controller.incrementerCaptureBlanc(positionPions.get(coordIntermediaire).estDame);//Incrémenter la capture du pion mangé
                     }
                     // Retirer le pion ennemi mangé (case intermédiaire)
                     positionPions.remove(coordIntermediaire);
@@ -446,25 +446,16 @@ public class Jeu {
                         Integer rowIndex = GridPane.getRowIndex(node);
                         Integer colIndex = GridPane.getColumnIndex(node);
 
-                        if (node instanceof ImageView && rowIndex != null && colIndex != null
+                        if (node instanceof ImageView imageView && rowIndex != null && colIndex != null
                                 && rowIndex == xActuel && colIndex == yActuel) {
-                            ImageView imageView = (ImageView) node;
 
                             // Utilisation de la fonction pour déplacer l'ImageView
-                            deplacerImageView(imageView, xActuel, yActuel, destinationX, destinationY);
+                            deplacerImageView(imageView, destinationX, destinationY);
 
                             break;  // Exit the loop once the ImageView has been moved
                         }
                     }
-
-
-                    // Afficher le déplacement
-                    afficherDeplacement(coordActuelle, coordDeplacement, pion.estEnnemi);
-                } else {
-                    System.out.println("La case de destination n'est pas vide. Déplacement annulé.");
                 }
-            } else {
-                System.out.println("Aucun pion ennemi à manger. Déplacement annulé.");
             }
         } else {
             // Si la destination est libre, simplement déplacer le pion
@@ -483,46 +474,33 @@ public class Jeu {
                     Integer rowIndex = GridPane.getRowIndex(node);
                     Integer colIndex = GridPane.getColumnIndex(node);
 
-                    if (node instanceof ImageView && rowIndex != null && colIndex != null
+                    if (node instanceof ImageView imageView && rowIndex != null && colIndex != null
                             && rowIndex == xActuel && colIndex == yActuel) {
-                        ImageView imageView = (ImageView) node;
 
                         // Utilisation de la fonction pour déplacer l'ImageView
-                        deplacerImageView(imageView, xActuel, yActuel, destinationX, destinationY);
+                        deplacerImageView(imageView, destinationX, destinationY);
 
                         break;  // Exit the loop once the ImageView has been moved
                     }
                 }
-
-                // Afficher le déplacement
-                afficherDeplacement(coordActuelle, coordDeplacement, pion.estEnnemi);
-            } else {
-                System.out.println("La case de destination est occupée. Déplacement annulé.");
             }
         }
     }
 
-
     /**
-     * @methode afficherDeplacement.
-     * @visibilite privée (private)
-     * @description Méthode pour afficher le déplacement d'un pion.
-     * @param coordActuelle   La coordonnée actuelle du pion, en format String.
-     * @param coordDeplacement La coordonnée de déplacement, en format String.
-     * @param estEnnemi        Indique si le pion appartient au robot, en format boolean.
+     * @methode cancellerSelection.
+     * @visibilite publique (public).
+     * @description Méthode pour canceller une sélection d'un pion.
+     * @param x Cordonnée de l'image à déselectionner
+     * @param y Cordonnée de l'image à déselectionner
      */
-    private void afficherDeplacement(String coordActuelle, String coordDeplacement, boolean estEnnemi)
-    {
-        System.out.println( "Déplacement du pion " + coordActuelle + " à la case " + coordDeplacement + "."); //Écrire le déplacement.
-    }
-
-//NOTE changer le traitement tour par tour... utiliser une variable bool pour désigner c'est le tour à qui et faire les traitements selon les cliques.
-    //garder le tour de l'IA
 
     public void cancellerSelection(int x, int y) {
+        //Extraire le Pion concerné
         String coord = extraireCoordDeXY(x, y);
         Pion pion = positionPions.get(coord);
 
+        //Extraire l'image non selectionnée du pion
         if (pion != null) {
             String imagePath;
             if (pion.estDame) {
@@ -530,14 +508,26 @@ public class Jeu {
             } else {
                 imagePath = pion.estEnnemi ? "/images/noir-normal.png" : "/images/blanc-normal.png";
             }
+            //Mettre à jour cette image
             updateImageView(x, y, imagePath);
         }
     }
 
+    /**
+     * @methode effectuerSelection.
+     * @visibilite publique (public).
+     * @description Méthode pour changer l'image d'un pion à celui d'un pion selectionné
+     * @param x Cordonnée du pion à sélectionner
+     * @param y Cordonnée du pion à sélectionner
+     */
+
     public void effectuerSelection(int x, int y) {
+
+        //Extraire le pion concerné
         String coord = extraireCoordDeXY(x, y);
         Pion pion = positionPions.get(coord);
 
+        //Extraire l'image sélectionné du pion
         if (pion != null) {
             String imagePath;
             if (pion.estDame) {
@@ -545,71 +535,39 @@ public class Jeu {
             } else {
                 imagePath = pion.estEnnemi ? "/images/noir-normal-selection.png" : "/images/blanc-normal-selection.png";
             }
+            //Mettre à jour l'image
             updateImageView(x, y, imagePath);
         }
     }
 
+    /**
+     * @methode updateImageView.
+     * @visibilite privée (private).
+     * @description Méthode pour mettre à jour un pion unique
+     * @param x Cordonnée du pion à changer
+     * @param y Cordonnée du pion à changer
+     * @param imagePath Emplacement de l'image à lui assigner
+     */
+
     private void updateImageView(int x, int y, String imagePath) {
+
+        //Chercher dans le damier la cordonnée x,y
         for (Node node : damier.getChildren()) {
             Integer rowIndex = GridPane.getRowIndex(node);
             Integer colIndex = GridPane.getColumnIndex(node);
 
             if (rowIndex != null && colIndex != null &&
                     rowIndex == x && colIndex == y &&
-                    node instanceof ImageView) {
+                    node instanceof ImageView imageView) {
 
-                ImageView imageView = (ImageView) node;
-                // Preserve all existing properties and listeners
-                Image image = new Image(Jeu.class.getResourceAsStream(imagePath));
+                //Mettre à jour l'image
+
+                //Préserver les propriétés de l'image actuelle
+                Image image = new Image(Objects.requireNonNull(Jeu.class.getResourceAsStream(imagePath)));
                 imageView.setImage(image);
                 break;
             }
         }
-    }
-
-    /**
-     * @methode aucunMouvementPossible.
-     * @visibilite privée (private).
-     * @description Méthode pour vérifier si un joueur (joueur ou ennemi) ne peut plus effectuer de mouvements valides.
-     * @param estEnnemi Indique si on vérifie les mouvements pour l'ennemi (true) ou pour le joueur (false), en format boolean.
-     * @return true si aucun mouvement n'est possible, false sinon, en format boolean.
-     */
-    private boolean aucunMouvementPossible(boolean estEnnemi)
-    {
-        // Parcourir tous les pions du joueur ou de l'ennemi.
-        for (Map.Entry<String, Pion> entree : positionPions.entrySet())
-        {
-            String coordPion = entree.getKey(); // Coordonnée du pion.
-            Pion pion = entree.getValue(); // Pion à cette coordonnée.
-
-            // Vérifier si le pion appartient au joueur ou à l'ennemi en fonction du paramètre estEnnemi.
-            if (pion.estEnnemi == estEnnemi)
-            {
-                // Vérifier les déplacements possibles pour ce pion.
-                for (int x = -1; x <= 1; x++) // Déplacement vertical.
-                {
-                    for (int y = -1; y <= 1; y++) // Déplacement horizontal.
-                    {
-
-                        if (Math.abs(x) == Math.abs(y) && x != 0 && y != 0) // Vérifier si le déplacement est diagonal (différence absolue égale) et non nul.
-                        {
-                            // Calculer la destination potentielle.
-                            String destination = extraireCoordDeXY(extraireValeurX(coordPion) + x, extraireValeurY(coordPion) + y);
-
-
-                            // Vérifier si la destination est valide et si le déplacement est possible.
-                            if (saisieValide(destination) && estDeplacementValide(coordPion, destination))
-                            {
-                                return false; // Un mouvement valide a été trouvé.
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        // Aucun mouvement valide n'a été trouvé pour ce joueur.
-        return true;
     }
 
     /**
@@ -619,7 +577,15 @@ public class Jeu {
      * @return true si le tour est terminé, false sinon, en format boolean.
      */
     public boolean tourDeLEnemi() {
-        // Get all enemy pawns
+        /*
+            Ordre de priorité du IA:
+            1. dame capture
+            2. capture normale
+            3. deplacement dame
+            4. deplacement normal
+         */
+
+        // Extraire tous les pions ennemis
         List<String> pionsEnnemi = new ArrayList<>();
         for (Map.Entry<String, Pion> entree : positionPions.entrySet()) {
             if (entree.getValue().estEnnemi) {
@@ -627,78 +593,87 @@ public class Jeu {
             }
         }
 
+        //Si aucun pions n'est disponible, terminer la partie.
         if (pionsEnnemi.isEmpty()) {
 
             estFinDePartie();
-            System.out.println("Aucun pion ennemi disponible. Tour terminé.");
             return false;
         }
 
-        // 1. First check for possible captures, prioritizing queens
+        // Vérifier les captures possibles, priorisant les dames
         List<String> captureSources = new ArrayList<>();
         List<String> captureDestinations = new ArrayList<>();
-        List<Boolean> isQueenCaptures = new ArrayList<>();
+        List<Boolean> estCaptureDame = new ArrayList<>();
 
+        //Vérifier tous les captures possibles de chaques pions
         for (String pionChoisi : pionsEnnemi) {
             Pion pion = positionPions.get(pionChoisi);
             int x = extraireValeurX(pionChoisi);
             int y = extraireValeurY(pionChoisi);
 
-            // Check capture directions (queens can capture in all directions)
+            //Vérifier si un pion peut capturer un autre
             int[][] captureDirections = pion.estDame ?
-                    new int[][]{{2,2}, {2,-2}, {-2,2}, {-2,-2}} : // Queen directions
-                    new int[][]{{2,2}, {2,-2}}; // Regular pawn directions (forward only)
+                    new int[][]{{2,2}, {2,-2}, {-2,2}, {-2,-2}} : // Mouvements dames
+                    new int[][]{{2,2}, {2,-2}}; // Mouvement pions
 
-            for (int[] dir : captureDirections) {
+            //Vérifier si c'est valide...
+            for (int[] dir : captureDirections)
+            {
                 String destination = extraireCoordDeXY(x + dir[0], y + dir[1]);
-                if (saisieValide(destination) && estDeplacementValide(pionChoisi, destination)) {
+
+                if (saisieValide(destination) && estDeplacementValide(pionChoisi, destination))
+                {
+                    //Si c'est valide, l'ajouter dans une liste.
                     captureSources.add(pionChoisi);
                     captureDestinations.add(destination);
-                    isQueenCaptures.add(pion.estDame);
+                    estCaptureDame.add(pion.estDame);
                 }
             }
         }
 
-        // If captures available, prioritize queen captures
+        // Si une capture est possible, prioriser une capture de dame
         if (!captureSources.isEmpty()) {
-            // Try to find queen captures first
+            // Essayer de trouver une capture de dame en premier
             for (int i = 0; i < captureSources.size(); i++) {
-                if (isQueenCaptures.get(i)) {
+                if (estCaptureDame.get(i)) {
+                    //Effectuer la capture
                     mettreAJourPositionPions(captureSources.get(i), captureDestinations.get(i),
                             positionPions.get(captureSources.get(i)));
                     dessinerJeu();
                     return true;
                 }
             }
-            // If no queen captures, do regular capture
+            //Si aucunes captures de dames, essayer une capture ordinaire
             int randomIndex = new Random().nextInt(captureSources.size());
+            //Mettre à jour la capture
             mettreAJourPositionPions(captureSources.get(randomIndex), captureDestinations.get(randomIndex),
                     positionPions.get(captureSources.get(randomIndex)));
             dessinerJeu();
             return true;
         }
 
-        // 2. Normal movement (prioritizing queen moves)
-        List<String> queenPawns = new ArrayList<>();
-        List<String> regularPawns = new ArrayList<>();
+        //Mouvements normaux, (priorité aux dames)
+        List<String> damePions = new ArrayList<>();
+        List<String> normalPions = new ArrayList<>();
 
+        //Ajouter le type de pion dans une liste
         for (String coord : pionsEnnemi) {
             if (positionPions.get(coord).estDame) {
-                queenPawns.add(coord);
+                damePions.add(coord);
             } else {
-                regularPawns.add(coord);
+                normalPions.add(coord);
             }
         }
 
-        // Try queens first
-        if (!queenPawns.isEmpty()) {
-            Collections.shuffle(queenPawns);
-            for (String pionChoisi : queenPawns) {
+        // Essayer la dame en premier
+        if (!damePions.isEmpty()) {
+            Collections.shuffle(damePions);
+            for (String pionChoisi : damePions) {
                 Pion pion = positionPions.get(pionChoisi);
                 int x = extraireValeurX(pionChoisi);
                 int y = extraireValeurY(pionChoisi);
 
-                // Queen can move in all 4 directions
+                // La dame peut bouger partout
                 int[][] moveDirections = {{1,1}, {1,-1}, {-1,1}, {-1,-1}};
                 List<String> destinations = new ArrayList<>();
 
@@ -711,6 +686,7 @@ public class Jeu {
 
                 if (!destinations.isEmpty()) {
                     String destinationChoisie = destinations.get(new Random().nextInt(destinations.size()));
+                    //Faire le déplacement au hasard
                     mettreAJourPositionPions(pionChoisi, destinationChoisie, pion);
                     dessinerJeu();
                     return true;
@@ -718,15 +694,15 @@ public class Jeu {
             }
         }
 
-        // Then try regular pawns
-        if (!regularPawns.isEmpty()) {
-            Collections.shuffle(regularPawns);
-            for (String pionChoisi : regularPawns) {
+        // Essayer avec les pions normaux
+        if (!normalPions.isEmpty()) {
+            Collections.shuffle(normalPions);
+            for (String pionChoisi : normalPions) {
                 Pion pion = positionPions.get(pionChoisi);
                 int x = extraireValeurX(pionChoisi);
                 int y = extraireValeurY(pionChoisi);
 
-                // Regular pawns can only move forward
+                // Ils peuvent juste avancer
                 int[][] moveDirections = {{1,1}, {1,-1}};
                 List<String> destinations = new ArrayList<>();
 
@@ -739,6 +715,7 @@ public class Jeu {
 
                 if (!destinations.isEmpty()) {
                     String destinationChoisie = destinations.get(new Random().nextInt(destinations.size()));
+                    //Faire le déplacement au hasard
                     mettreAJourPositionPions(pionChoisi, destinationChoisie, pion);
                     dessinerJeu();
                     return true;
@@ -746,7 +723,7 @@ public class Jeu {
             }
         }
 
-        System.out.println("Tous les pions ennemis sont bloqués. La partie est terminée.");
+        //Sinon, tous les pions sont bloqués
         finirPartie();
         return false;
     }
@@ -772,9 +749,23 @@ public class Jeu {
         finPartie =true;
         gagnant = "blancs";
     }
+
+    /**
+     * @methode getGagnant.
+     * @visibilite publique (public).
+     * @description Méthode "Getter" qui retourne le gagnant de la partie.
+     * @return String, le gagnant de la partie
+     */
     public String getGagnant() {
         return gagnant;
     }
+
+
+    /**
+     * @methode reinitialiserJeu.
+     * @visibilite publique (public).
+     * @description Méthode pour réinitialiser l'entièreté du jeu.
+     */
 
     public void reinitialiserJeu() {
         finPartie = false;

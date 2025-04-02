@@ -278,10 +278,7 @@
       <VBox fx:id="captureJoueurVBox" prefHeight="412.0" prefWidth="109.0" BorderPane.alignment="CENTER" />
    </right>
    <left>
-      <VBox fx:id="captureEnnemiVBox" prefHeight="512.0" prefWidth="94.0" BorderPane.alignment="CENTER">
-         <children>
-            <Label text="Pions noirs &#10;capturés" />
-         </children></VBox>
+      <VBox fx:id="captureEnnemiVBox" prefHeight="512.0" prefWidth="94.0" BorderPane.alignment="CENTER" />
    </left>
    <top>
       <HBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="88.0" minWidth="400.0" prefHeight="88.0" prefWidth="650.0" BorderPane.alignment="CENTER">
